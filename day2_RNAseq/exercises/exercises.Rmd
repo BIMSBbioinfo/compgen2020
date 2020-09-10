@@ -1,0 +1,235 @@
+---
+title: "Computational Genomics Course 2019 - RNA-seq exercises"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Setup
+
+Let's get some interesting rna-seq data from ExpressionAtlas database. 
+
+```{r get_data}
+query <- searchAtlasExperiments(properties = 'lung cancer', species = 'mouse')
+# download first dataset 
+download <- getAtlasData(experimentAccessions = 'E-GEOD-59831')
+```
+
+Extract count data and experiment data from the downloaded R object. 
+
+```{r}
+dt <- download$`E-GEOD-59831`$rnaseq
+countData <- as.matrix(assays(dt)[['counts']])
+colData <- as.data.frame(colData(dt))
+colData$disease <- as.factor(colData$disease)
+```
+
+# Explore the count table and experiment design 
+
+## Experiment design
+
+We would like to understand the experiment design. 
+
+- Summarize the colData table 
+  - Try `summary` function
+  - Try `table` function on a specific column (e.g. 'disease')
+  - How can you loop through each column and get a summary (hint: combine `apply` and `table` functions)
+
+```{r}
+summary(colData)
+table(colData$disease)
+apply(colData, 2, table)
+```
+
+It might also be worth checking out the [ExpressionAtlas database](https://www.ebi.ac.uk/arrayexpress/experiments/) and search for the experiment id, for which you just downloaded the rna-seq count table. You can find more experimental information there. 
+
+## Count table 
+
+Get a summary of the count table using the `summary` function. 
+
+```{r}
+
+```
+
+Also get a feeling of the depth of sequencing of different samples. 
+
+- How can you get the sum of the total reads per sample in the count table? Compare the total reads per sample. Are there major outliers? 
+
+```{r}
+
+```
+
+# Diagnostics on read counts
+
+Here, make diagnostic plots on the raw/normalized count table to check how the samples cluster. Especially pay attention to batch effects. Do batch effects clear after normalization steps? 
+
+## Raw count table 
+
+Set up a `EDASeq::newSeqExpressionSet` object using the count table and the colData table. 
+
+```{r}
+
+```
+
+### Heatmap 
+Make a heatmap of the top 500 most variable genes. 
+```{r}
+
+```
+
+Now get the pairwise correlation between samples and plot the correlation matrix as a heatmap:
+Hint: see `cor` function
+
+```{r}
+
+```
+
+### PCA plot
+
+Make a PCA plot using `plotPCA` function. Color samples by disease status. 
+```{r}
+
+```
+
+### RLE plot
+Make an RLE plot using `plotRLE` function. Color samples by disease status. 
+```{r}
+
+```
+
+## Diagnostics on normalized counts
+
+Now, normalize the raw counts using DESeq2. Then, repeat the same diagnostics: heatmap of top variable genes, PCA plot, and RLE plot. 
+
+### DESeq2 normalization 
+
+Now create a DESeqDataSet object from the raw count matrix, using the colData and using the design formula "~ disease". 
+
+```{r}
+
+```
+
+Extract the normalized counts from the DESeq2 object and apply the same diagnostics (heatmap, pca/rle plots) on the DESeq-normalized counts. 
+
+#### Heatmap
+
+On pairwise correlation of samples 
+```{r}
+
+```
+
+#### PCA plot
+```{r}
+
+```
+
+#### RLE plot
+```{r}
+
+```
+
+
+# Accounting for sources of variation 
+
+## Differential expression analysis with known covariates
+
+Now, starting from scratch (raw count table), carry out a differential expression analysis accounting for the known covariates in the colData object such as  `cell_type`, and `disease`. 
+
+```{r}
+
+```
+
+Do a differential expression analysis contrasting samples for the disease status: (lung carcinoma versus normal)
+```{r}
+
+```
+
+Do some more diagnostics
+
+### MA plot
+
+```{r}
+
+```
+
+### p-value histogram
+
+```{r}
+
+```
+
+
+### PCA plot
+```{r}
+
+```
+
+
+## Differential expression analysis without known covariates
+
+Do you think you could improve the PCA plot from DESeq2 using a tool that corrects the count table without known sources of variation? 
+
+Set up a `EDASeq::newSeqExpressionSet` object using the count table and the colData table. 
+
+```{r}
+
+```
+
+Use `RUVs` function from `RUVSeq` package to remove the effect of unwanted variation from the raw counts. Try setting the `k` argument to various values from 1 to 5. For every value of k, diagnose the sample clustering using a PCA plot and heatmap to pick the best k value. 
+
+```{r}
+
+```
+
+Now, integrate the covariates estimated from RUVs with DESeq2 to re-do the differential expression analysis. 
+
+```{r}
+
+```
+
+Compare the differential expression results tables with and without using RUVs: 
+
+- Do you get the same list of genes as differentially expressed? 
+- How does the p-value histogram change? 
+- Make an MA plot, do you see any differences? 
+- Do a GO term analysis on the top differentially expressed genes. Do you see the top terms in both analyses? 
+
+```{r}
+
+```
+
+
+Now, knit this document and obtain your self-contained report of your RNA-seq analysis in HTML or PDF formats. See the `Knit` button on top of this window. Click on `Knit to HTML`. 
+
+# Stylizing your HTML report
+
+Check out [this page](https://bookdown.org/yihui/rmarkdown/html-document.html) that describe how to stylize your rmarkdown reports. For example try adding the following lines at the top of the page: 
+
+Replace this line
+
+```
+output: html_document
+```
+
+with this:
+```
+output:
+  html_document:
+    theme: united
+    highlight: tango
+```
+
+Re-compile your report and see how it looks. 
+
+- How can you also keep your code but keep it folded by default in the output?
+- How can you have a floating table of contents on your screen? 
+
+# Share
+
+Share your report with your collaborator!
+
+Congratulations! 
+
+
