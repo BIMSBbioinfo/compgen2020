@@ -1,0 +1,68 @@
+---
+title: "Exercise2.Rmd"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+In this exercise sheet, you will: 
+1. download a dataset
+2. Run DESeq2 accounting for a known variable and discover disease specific differentially expressed genes. 
+3. Make some diagnostic plots 
+
+Download the RNA-seq data from ExpressionAtlas with accession code: "E-GEOD-59831". 
+
+Extract the count and colData tables. Convert colData object into a data.frame object. 
+```{r}
+
+```
+
+We would like to understand the experiment design. 
+
+- Summarize the colData table 
+  - Try `summary` function
+  - Try `table` function on a specific column (e.g. 'disease')
+  - How can you loop through each column and get a summary (hint: combine `apply` and `table` functions)
+
+```{r}
+
+```
+
+Now, carry out a differential expression analysis. 
+Our variable of interest is `disease` and we would like to account for `cell_type` in differential expression analysis. Hint: start with `dds <- DESeq2::DESeqDataSetFromMatrix(...)`
+
+```{r}
+
+```
+
+Get differentially expressed genes between normal and lung carcinoma samples. 
+Hint: See ?DESeq2::results function. 
+```{r}
+
+```
+
+Do some more diagnostics
+
+MA plot
+```{r}
+
+```
+
+p-value histogram
+```{r}
+
+```
+
+
+PCA plot:
+
+Make two plots, one colored by 'disease' and the other by 'cell_type'. Which one is more dominant?
+Hint: use the plot_pca function defined here: https://github.com/BIMSBbioinfo/compgen2020/blob/master/day2_RNAseq/lectureCode/accounting_for_known_covariates_in_DE.R
+```{r}
+
+```
+
+
+

@@ -1,0 +1,63 @@
+---
+title: "Exercise4"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Import the raw count table "SRP029880.raw_counts.tsv" from the `compGenomRData` package as a matrix. 
+```{r}
+
+```
+
+Apply TPM normalisation to the count matrix.
+
+```{r}
+
+```
+
+Run `colSums(tpm)` to confirm that the sample sizes are all equal to 10^6. 
+
+```{r}
+
+```
+
+Go to https://www.gsea-msigdb.org/gsea/msigdb/collections.jsp#C2 and download the 
+'Canonical pathways' gene set collection (2868 gene sets) with gene symbols.
+
+Parse the downloaded gene sets into a named list of vectors 
+```{r}
+
+```
+
+Make a histogram of the number of genes per set in the gene set collection
+Hint: use ?hist function 
+```{r}
+
+```
+
+Calculate the differential gene sets (using `gage` library) between the case samples (columns 1 to 5)
+and the control samples (columns 6 to 10) of the normalized (TPM) count matrix.
+
+Hint: see ?gage::gage function. Set compare='as.group' 
+
+```{r}
+
+```
+
+Find the KEGG pathway that shows the most up-regulation in case samples and 
+obtain a subset of the tpm normalized count matrix including only the genes from that gene set. 
+```{r}
+
+```
+
+Make a heatmap of the most down-regulated gene set
+```{r}
+
+```
+
+
+
+
