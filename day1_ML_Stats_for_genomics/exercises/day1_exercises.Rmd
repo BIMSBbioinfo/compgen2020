@@ -1,26 +1,108 @@
 ---
-title: "Day 1 exercises"
-output: html_document
+title: 'compgen2020: Day 1 exercises'
+output:
+  pdf_document: default
+  pdf: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Exercises
+# Exercises for Day 1
 
-fill this out
+## Statistics for genomics 
 
-```{r cars}
-summary(cars)
+### How to test for differences in samples
+1. Test the difference of means of the following simulated genes
+using the randomization, `t-test()`, and `wilcox.test()` functions.
+Plot the distributions using histograms and boxplots.  
+```{r exRnorm1chp3,eval=FALSE}
+set.seed(100)
+gene1=rnorm(30,mean=4,sd=2)
+gene2=rnorm(30,mean=2,sd=2)
+
 ```
 
-## Including Plots
+### Relationship between variables
 
-You can also embed plots, for example:
+1. For the next exercises, read the data set histone modification data set. Use the following to get the path to the file:
+```
+hmodFile=system.file("extdata",
+                    "HistoneModeVSgeneExp.rds",
+                     package="compGenomRData")`
+```
+There are 3 columns in the dataset these are measured levels of H3K4me3,
+H3K27me3 and gene expression per gene. Once you read in the data, plot the scatter plot for H3K4me3 vs. expression. 
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+2. Plot the scatter plot for H3K27me3 vs. expression.  
+
+3. Fit the model for prediction of expression data using: 1) Only H3K4me3 as explanatory variable, 2) Only H3K27me3 as explanatory variable, and 3) Using both H3K4me3 and H3K27me3 as explanatory variables.Inspect the `summary()` function output in each case, which terms are significant. 
+
+4. Is using H3K4me3 and H3K27me3 better than the model with only H3K4me3 ? 
+
+
+## Unsupervised learning for genomics 
+For this set of exercises we will be using the expression data shown below:
+```{r dataLoadClu,eval=FALSE}
+expFile=system.file("extdata",
+                    "leukemiaExpressionSubset.rds",
+                    package="compGenomRData")
+mat=readRDS(expFile)
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+### Clustering
+
+1. We want to observe the effect of data transformation in this exercise. Scale the expression matrix with the `scale()` function. In addition, try taking the logarithm of the data with the `log2()` function prior to scaling. Make box plots of the unscaled and scaled data sets using the `boxplot()` function. 
+
+2. For the same problem above using the unscaled data and different data transformation strategies, use the `ward.d` distance in hierarchical clustering and plot multiple heatmaps. You can try to use the `pheatmap` library or any other library that can plot a heatmap with a dendrogram. Which data-scaling strategy provides more homogeneous clusters with respect to disease types?
+
+3. For the transformed and untransformed data sets used in the exercise above, use the silhouette for deciding number of clusters using hierarchical clustering. 
+
+
+### Dimensionality reduction
+We will be using the leukemia expression data set again. You can use it as shown in the clustering exercises.
+
+1. Do PCA on the expression matrix using the `princomp()` function and then use the `screeplot()` function to visualize the explained variation by eigenvectors. How many top components explain 95% of the variation?  
+
+2. Our next tasks are to remove eigenvectors and reconstruct the matrix using SVD, then calculate the reconstruction error as the difference between original and reconstructed matrix. HINT: You have to use the `svd()` function and equalize eigenvalue to $0$ for the component you want to remove. 
+
+## Predictive modeling with supervised learning 
+
+### Classification 
+For this set of exercises we will be using the gene expression and patient annotation data from the glioblastoma patient. You can read the data as shown below:
+```{r,readMLdataEx,eval=FALSE}
+library(compGenomRData)
+# get file paths
+fileLGGexp=system.file("extdata",
+                      "LGGrnaseq.rds",
+                      package="compGenomRData")
+fileLGGann=system.file("extdata",
+                      "patient2LGGsubtypes.rds",
+                      package="compGenomRData")
+# gene expression values
+gexp=readRDS(fileLGGexp)
+
+# patient annotation
+patient=readRDS(fileLGGann)
+
+```
+
+1. Our task is to not use any data transformation and do classification. Run the k-NN classifier on the data without any transformation or scaling. What is the effect on classification accuracy for k-NN predicting the CIMP and noCIMP status of the patient? 
+
+### Regression
+For this set of problems we will use the regression data set where we tried to predict the age of the sample from the methylation values. The data can be loaded as shown below: 
+```{r, readMethAgeex,eval=FALSE}
+# file path for CpG methylation and age
+fileMethAge=system.file("extdata",
+                      "CpGmeth2Age.rds",
+                      package="compGenomRData")
+
+# read methylation-age table
+ameth=readRDS(fileMethAge)
+```
+
+1. Split the 20% of the methylation-age data as test data and random forest regression and plot the importance metrics. 
+
