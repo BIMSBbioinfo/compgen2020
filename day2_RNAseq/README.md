@@ -12,7 +12,7 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 BiocManager::install('DESeq2', 'EDASeq', 'RUVSeq','corrplot', 
                       'gprofiler2', 'gage', 'ggfortify', 'ggplot2', 
                       'knitr', 'pheatmap', 'rmarkdown', 
-                      'ExpressionAtlas', 'devtools')
+                      'ExpressionAtlas', 'devtools', 'ggrepel')
 
 - Data package from the book [at](http://compgenomr.github.io/book/)
 devtools::install_github("compgenomr/compGenomRData")
