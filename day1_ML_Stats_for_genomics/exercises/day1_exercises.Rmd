@@ -104,5 +104,5 @@ fileMethAge=system.file("extdata",
 ameth=readRDS(fileMethAge)
 ```
 
-1. Split the 20% of the methylation-age data as test data and random forest regression and plot the importance metrics. 
+1. Split the 20% of the methylation-age data as test data. Then, run random forest regression and plot the importance metrics. 
 
