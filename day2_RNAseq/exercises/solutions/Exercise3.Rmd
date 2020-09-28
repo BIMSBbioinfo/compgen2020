@@ -1,0 +1,42 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Download pre-calculated DESeq results object ('DE_lung_cancer.RDS') from here:
+https://github.com/BIMSBbioinfo/compgen2020/tree/master/day2_RNAseq/data
+
+Hint: see ?download.file function (you can also manually download it and put it in the folder where the Exercise3.Rmd is located.)
+```{r}
+download.file('https://github.com/BIMSBbioinfo/compgen2020/tree/master/day2_RNAseq/data/DE_lung_cancer.RDS', destfile = 'DE.RDS')
+```
+
+Load the RDS object into the session.
+
+```{r}
+DE <- readRDS('DE.RDS')
+```
+
+Select the top 500 genes sorted by pvalue, filtering for padj < 0.05 and absolute log2FoldChange > 2
+
+```{r}
+DE_filtered <- DE[DE$padj < 0.05 & !is.na(DE$padj) & abs(DE$log2FoldChange) > 2,]
+top_genes <- rownames(DE_filtered[order(DE_filtered$pvalue),])[1:500]
+```
+
+
+Now run gprofiler2 to find enriched KEGG and REACTOME pathways
+Hint: see ?gprofiler2::gost function
+
+Make a gost plot to plot the enriched terms. 
+```{r}
+go <- gprofiler2::gost(top_genes, organism = 'mmusculus', sources = c('KEGG', 'REAC'))
+```
+
+
+
+
