@@ -142,7 +142,8 @@ plot(d$v[,2],type="b")
 # plot the heatmap without clustering columns
 pheatmap(mat,show_rownames=FALSE,show_colnames=FALSE,cluster_cols = FALSE,
          annotation_col=annotation_col,
-         scale = "none",clustering_method="ward.D2",clustering_distance_cols="euclidean")
+         scale = "none",clustering_method="ward.D2",
+         clustering_distance_cols="euclidean")
 
 
 

@@ -1,0 +1,428 @@
+---
+title: 'compgen2020: Day 1 exercises'
+output:
+  pdf_document: default
+  pdf: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Exercises for Day 1
+
+## Statistics for genomics 
+
+### How to test for differences in samples
+1. Test the difference of means of the following simulated genes
+using the randomization, `t-test()`, and `wilcox.test()` functions.
+Plot the distributions using histograms and boxplots.  
+```{r exRnorm1chp3,eval=FALSE}
+set.seed(100)
+gene1=rnorm(30,mean=4,sd=2)
+gene2=rnorm(30,mean=2,sd=2)
+
+```
+
+
+__solution:__
+```{r }
+set.seed(100)
+gene1=rnorm(30,mean=4,sd=2)
+gene2=rnorm(30,mean=2,sd=2)
+t.test(gene1,gene2)
+wilcox.test(gene1,gene2)
+
+
+library(mosaic)
+org.diff=mean(gene1)-mean(gene2) #1.872579
+#org.diff
+gene.df=data.frame(exp=c(gene1,gene2),
+                   group=c( rep("set1_test",30),rep("set2_control",30) ) )
+
+# randomization
+exp.null <- do(1000) * diff(mosaic::mean(exp ~ shuffle(group), data=gene.df))
+
+
+p.val=sum(exp.null[,1]>org.diff)/length(exp.null[,1])
+paste0("Randomization test p-value = ", p.val)
+```
+### Relationship between variables
+
+For the next exercises, read the data set histone modification data set. Use the following to get the path to the file:
+```
+hmodFile=system.file("extdata",
+                    "HistoneModeVSgeneExp.rds",
+                     package="compGenomRData")
+```
+There are 3 columns in the dataset these are measured levels of H3K4me3,
+H3K27me3 and gene expression per gene. 
+
+2. Once you read in the data, plot the scatter plot for H3K4me3 vs. expression. 
+
+__solution:__
+```{r}
+hmodFile=system.file("extdata",
+                    "HistoneModeVSgeneExp.rds",
+                     package="compGenomRData")
+
+exp=readRDS(hmodFile)
+head(exp)
+
+plot(exp[,1],exp[,3],xlab="H3K4me3",ylab="expression")
+smoothScatter(exp[,1],exp[,3],colramp = topo.colors)
+```
+
+3. Plot the scatter plot for H3K27me3 vs. expression.  
+
+__solution:__
+```{r}
+
+
+plot(exp[,2],exp[,3],xlab="H3K27me3",ylab="expression")
+
+smoothScatter(exp[,2],exp[,3],colramp = topo.colors)
+
+```
+
+4. Fit the model for prediction of expression data using: 1) Only H3K4me3 as explanatory variable, 2) Only H3K27me3 as explanatory variable, and 3) Using both H3K4me3 and H3K27me3 as explanatory variables.Inspect the `summary()` function output in each case, which terms are significant. 
+
+
+__solution:__
+
+```{r}
+modH3k4me3=lm(measured_log2~H3k4me3,data=exp)
+summary(modH3k4me3)
+
+modH3k27me3=lm(measured_log2~H3k27me3,data=exp)
+summary(modH3k27me3)
+
+modall=lm(measured_log2~H3k27me3+H3k4me3,data=exp)
+summary(modall)
+
+
+```
+
+
+
+5. Is using H3K4me3 and H3K27me3 better than the model with only H3K4me3 ? 
+
+__solution:__
+The model with both the histone modifications is slightly better than
+the model with just H3K4me3 based on R-squared. This is the correct answer.
+
+However, that small difference in accuracy may not be significant. One can compare
+alternative models with a proper test. `anova()` function can do this when we 
+are comparing models. It seems adding H3k27me3 lead to significant improvement
+of the fit. This is just FYI, it wasn't expected as part of the correct answer.
+
+```{r}
+anova(modH3k4me3,modall)
+```
+
+## Unsupervised learning for genomics 
+For this set of exercises we will be using the expression data shown below:
+```{r dataLoadClu,eval=FALSE}
+expFile=system.file("extdata",
+                    "leukemiaExpressionSubset.rds",
+                    package="compGenomRData")
+mat=readRDS(expFile)
+
+```
+
+
+### Clustering
+
+6. We want to observe the effect of data transformation in this exercise. Scale the expression matrix with the `scale()` function. In addition, try taking the logarithm of the data with the `log2()` function prior to scaling. Make box plots of the unscaled and scaled data sets using the `boxplot()` function. 
+
+```{r}
+boxplot(mat,outline=F)
+matscl=scale(mat)
+boxplot(matscl,outline=F)
+matlog=log2(mat+1)
+boxplot(matlog,outline=F)
+matlogscl=scale(log2(mat+1))
+boxplot(matlogscl,outline=F)
+```
+
+7. For the same problem above using the unscaled data and different data transformation strategies, use the `ward.d` distance in hierarchical clustering and plot multiple heatmaps. You can try to use the `pheatmap` library or any other library that can plot a heatmap with a dendrogram. Which data-scaling strategy provides more homogeneous clusters with respect to disease types?
+
+__solution:__
+scaling generally yields more homogeneous clusters. Just taking logs without scaling
+is the worst in terms of cluster homogeneity. 
+```{r}
+library(pheatmap)
+# set the leukemia type annotation for each sample
+annotation_col = data.frame(
+  LeukemiaType =substr(colnames(mat),1,3))
+rownames(annotation_col)=colnames(mat)
+
+pheatmap(mat,show_rownames=FALSE,show_colnames=FALSE,cluster_cols = TRUE,
+         annotation_col=annotation_col,
+         scale = "none",clustering_method="ward.D2",
+         clustering_distance_cols="euclidean")
+
+pheatmap(matscl,show_rownames=FALSE,show_colnames=FALSE,cluster_cols = TRUE,
+         annotation_col=annotation_col,
+         scale = "none",clustering_method="ward.D2",
+         clustering_distance_cols="euclidean")
+
+pheatmap(matlog,show_rownames=FALSE,show_colnames=FALSE,cluster_cols = TRUE,
+         annotation_col=annotation_col,
+         scale = "none",clustering_method="ward.D2",
+         clustering_distance_cols="euclidean")
+
+pheatmap(matlogscl,show_rownames=FALSE,show_colnames=FALSE,cluster_cols = TRUE,
+         annotation_col=annotation_col,
+         scale = "none",clustering_method="ward.D2",
+         clustering_distance_cols="euclidean")
+```
+
+8. For the transformed and untransformed data sets used in the exercise above, use the silhouette for deciding number of clusters using hierarchical clustering. 
+
+__solution:__
+k=4 seems to be the best clustering regardless of the data transformation.
+However, in some cases k=3 and k=5 are close to k=4.
+```{r}
+library(cluster)
+
+# clustering different transformations with hclust
+hcl=hclust(dist(t(mat)))
+hcllog=hclust(dist(t(matlog)))
+hclscl=hclust(dist(t(matscl)))
+hcllogscl=hclust(dist(t(matlogscl)))
+
+
+# silhouette can be used in any clustering result
+# we use it with hclust & cuttree
+Ks=sapply(2:7,
+          function(i){ 
+            summary(silhouette(cutree(hcl,k=i),dist(t(mat))))$avg.width})
+
+Kslog=sapply(2:7,
+          function(i){ 
+            summary(silhouette(cutree(hcllog,k=i),dist(t(matlog))))$avg.width})
+
+
+Ksscl=sapply(2:7,
+          function(i){ 
+            summary(silhouette(cutree(hclscl,k=i),dist(t(matscl))))$avg.width})
+
+
+Kslogscl=sapply(2:7,
+          function(i){ 
+            summary(silhouette(cutree(hcllogscl,k=i),dist(t(matlogscl))))$avg.width})
+
+# plotting average silhouette scores per k and per data transformation
+plot(2:7,Ks,xlab="k",ylab="av. silhouette",type="b",
+     pch=19)
+plot(2:7,Ksscl,xlab="k",ylab="av. silhouette",type="b",
+     pch=19)
+plot(2:7,Kslog,xlab="k",ylab="av. silhouette",type="b",
+     pch=19)
+plot(2:7,Kslogscl,xlab="k",ylab="av. silhouette",type="b",
+     pch=19)
+
+
+
+```
+
+### Dimensionality reduction
+We will be using the leukemia expression data set again. You can use it as shown in the clustering exercises.
+
+9. Do PCA on the expression matrix using the `princomp()` function and then use the `screeplot()` function to visualize the explained variation by eigenvectors. How many of the top components explain 95% of the variation?  
+
+__solution:__
+With this input matrix, the first 25 components explains the 95% of variability.
+```{r}
+pr = prcomp(matlogscl)
+screeplot(pr)
+summary(pr)
+```
+
+
+10. Our next tasks are to remove eigenvectors and reconstruct the matrix using SVD, then calculate the reconstruction error as the difference between original and reconstructed matrix. HINT: You have to use the `svd()` function and equalize eigenvalue to $0$ for the component you want to remove. 
+
+__solution:__
+I'm removing the 2nd eigenvector only. The question is not clear on which
+eigenvectors to remove so I picked one and removed it.
+```{r}
+s=svd(matlogscl)
+D <- diag(s$d)
+mat.rec1 = s$u %*% D %*% t(s$v)
+D[2,2] <- 0 # remove 2nd eigenvector by setting its eigenvalue to 0
+mat.rec2 = s$u %*% D %*% t(s$v)
+reconstruction.error = sum((mat.rec1 -  mat.rec2)^2)
+
+
+# remove only 4th eigenvector
+s=svd(matlogscl)
+D <- diag(s$d)
+mat.rec1 = s$u %*% D %*% t(s$v)
+D[4,4] <- 0 # remove 2nd eigenvector by setting its eigenvalue to 0
+mat.rec2 = s$u %*% D %*% t(s$v)
+sum((mat.rec1 -  mat.rec2)^2)
+```
+
+removing 4th eigenvector does less damage than removing 2nd eigenvector
+,which is expected
+
+
+## Predictive modeling with supervised learning 
+
+### Classification 
+For this set of exercises we will be using the gene expression and patient annotation data from the glioblastoma patient. You can read the data as shown below:
+```{r,readMLdataEx,eval=FALSE}
+library(compGenomRData)
+# get file paths
+fileLGGexp=system.file("extdata",
+                      "LGGrnaseq.rds",
+                      package="compGenomRData")
+fileLGGann=system.file("extdata",
+                      "patient2LGGsubtypes.rds",
+                      package="compGenomRData")
+# gene expression values
+gexp=readRDS(fileLGGexp)
+
+# patient annotation
+patient=readRDS(fileLGGann)
+
+```
+
+11. Our task is to not use any data transformation and do classification. Run the k-NN classifier on the data without any transformation or scaling. What is the effect on classification accuracy for k-NN predicting the CIMP and noCIMP status of the patient? 
+
+__solution:__
+Below, we are using cross-validation to measure accuracy using the untransformed
+and transformed data set. It is possible to do this with a hold-out test data
+set as well. Buy with CV, we have a more reliable accuracy measure. Transforming
+the data slightly increases the accuracy. However, note that we also select the top 1000 most variable genes. The data is pre-normalized, the transformation does not
+have a large impact especially for this classifier. 
+```{r}
+
+
+
+
+
+#  transpose the matrix
+tgexp <- t(gexp)
+
+
+# transform the data, log and scale it
+# there is a difference between scaling before or after transposing the data
+# this will also affect the results
+trs.g=t(scale(log10(gexp+1)))
+
+
+# get most variable genes
+SDs=apply(tgexp,2,sd )
+topPreds=order(SDs,decreasing = TRUE)[1:1000]
+tgexp=tgexp[,topPreds]
+
+SDs2=apply(trs.g,2,sd )
+topPreds2=order(SDs2,decreasing = TRUE)[1:1000]
+trs.g=trs.g[,topPreds2]
+
+# merge for class groups
+tgexp=merge(patient,tgexp,by="row.names")
+
+# push sample ids back to the row names
+rownames(tgexp)=tgexp[,1]
+tgexp=tgexp[,-1]
+
+
+# merge for class groups
+trs.g=merge(patient,trs.g,by="row.names")
+
+# push sample ids back to the row names
+rownames(trs.g)=trs.g[,1]
+trs.g=trs.g[,-1]
+
+set.seed(42) # set the random number seed for reproducibility 
+require(caret)
+# this method controls everything about training
+# we will just set up 5-fold cross validation
+trctrl <- trainControl(method = "cv",number=5)
+
+# we will now train k-NN model
+knn_fitTrs <- train(subtype~., data = trs.g, 
+                 method = "knn",
+                 trControl=trctrl,
+                 tuneGrid = data.frame(k=2:7)) # try k between 2-7
+
+# we will now train k-NN model
+knn_fit<- train(subtype~., data = tgexp, 
+                 method = "knn",
+                 trControl=trctrl,
+                 tuneGrid = data.frame(k=2:7))# try k between 2-7
+
+#  cross-validation accuracy
+knn_fitTrs$results
+knn_fit$results
+
+
+
+```
+### Regression
+For this set of problems we will use the regression data set where we tried to predict the age of the sample from the methylation values. The data can be loaded as shown below: 
+```{r, readMethAgeex,eval=FALSE}
+# file path for CpG methylation and age
+fileMethAge=system.file("extdata",
+                      "CpGmeth2Age.rds",
+                      package="compGenomRData")
+
+# read methylation-age table
+ameth=readRDS(fileMethAge)
+```
+
+12. Split the 20% of the methylation-age data as test data. Then, run random forest regression and plot the importance metrics. 
+
+--solution:__
+
+```{r}
+set.seed(4) # set the random number seed for reproducibility 
+
+# removing less variable CpGs, not necessary but things run faster
+# with less variables
+ameth=ameth[,c(TRUE,matrixStats::colSds(as.matrix(ameth[,-1]))>0.1)]
+
+# get indices for 80% of the data set
+intrain <- createDataPartition(y = ameth[,1], p= 0.80)[[1]]
+
+
+# seperate test and training sets
+training <- ameth[intrain,]
+testing <- ameth[-intrain,]
+
+# we are not going to do any cross-validatin
+# and rely on OOB error
+trctrl <- trainControl(method = "none" )
+
+# we will now train random forest model
+rfregFit <- train(Age~., 
+                  data = training, 
+                  method = "ranger",
+                  trControl=trctrl,
+                  # calculate importance
+                  importance="permutation", 
+                  tuneGrid = data.frame(mtry=50,
+                                        min.node.size = 5,
+                                        splitrule="variance")
+)
+
+
+# plot variable importance for top 10 variables
+plot(varImp(rfregFit),top=10)
+
+# predict on the test set
+testPred=predict(rfregFit,testing[,-1])
+
+# R-squared for the test set
+(cor(testPred,testing[,1]))^2
+
+# R-squared from OOB training dataset
+rfregFit$finalModel$r.squared
+
+
+```
+
+
