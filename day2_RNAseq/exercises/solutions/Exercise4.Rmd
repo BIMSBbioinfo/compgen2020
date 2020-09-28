@@ -1,0 +1,84 @@
+---
+title: "Exercise4"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Import the raw count table "SRP029880.raw_counts.tsv" from the `compGenomRData` package as a matrix. 
+```{r}
+counts_file <- system.file("extdata/rna-seq/SRP029880.raw_counts.tsv",
+                           package = "compGenomRData")
+counts <- as.matrix(read.table(counts_file, header = T, sep = '\t'))
+```
+
+Apply TPM normalisation to the count matrix.
+
+```{r}
+geneLengths <- as.vector(subset(counts, select = c(width)))
+tpm <- apply(X = countData,
+              MARGIN = 2, 
+              FUN = function(x) {
+                x <- x / geneLengths * 10^3
+                x <- x / sum(x) * 10^6
+              })
+```
+
+Run `colSums(tpm)` to confirm that the sample sizes are all equal to 10^6. 
+
+```{r}
+colSums(tpm)
+```
+
+Go to https://www.gsea-msigdb.org/gsea/msigdb/collections.jsp#C2 and download the 
+'Canonical pathways' gene set collection (2868 gene sets) with gene symbols.
+
+Parse the downloaded gene sets into a named list of vectors 
+```{r}
+canonical_pathways <- do.call(c, lapply(readLines('~/Downloads/c2.cp.v7.2.symbols.gmt'), 
+                            function(x) {
+                              x <- unlist(strsplit(x, "\t"))
+                              l <- list(x[3:length(x)])
+                              names(l) <- x[1]
+                              return(l)
+                              }))
+```
+
+Make a histogram of the number of genes per set in the gene set collection
+Hint: use ?hist function 
+```{r}
+hist(log2(lengths(canonical_pathways)))
+```
+
+Calculate the differential gene sets (using `gage` library) between the case samples (columns 1 to 5)
+and the control samples (columns 6 to 10) of the normalized (TPM) count matrix.
+
+Hint: see ?gage::gage function. Set compare='as.group' 
+
+```{r}
+require(gage)
+gsea_results  <- gage(exprs = log2(tpm+1), 
+                       ref = 6:10, samp = 1:5,  
+                       gsets = canonical_pathways, 
+                       compare = 'as.group')
+```
+
+Find the KEGG pathway that shows the most up-regulation in case samples and 
+obtain a subset of the tpm normalized count matrix including only the genes from that gene set. 
+```{r}
+head(gsea_results$greater)
+common <- intersect(rownames(tpm), canonical_pathways$KEGG_COMPLEMENT_AND_COAGULATION_CASCADES)
+M <- tpm[common,]
+```
+
+Make a heatmap of the most down-regulated gene set
+```{r}
+require(pheatmap)
+pheatmap::pheatmap(M, scale = 'row', show_rownames = F, cluster_cols = F)
+```
+
+
+
+

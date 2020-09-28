@@ -1,0 +1,114 @@
+---
+title: "Exercises-1"
+output: html_document
+---
+
+The following set of exercises cover:
+
+1. How to download a colorectal cancer dataset from Expression Atlas
+2. How to hormalize the count matrix using DESeq2
+3. How to do exploratory analysis of the experiment design and count matrix
+
+The diagnostic plots should help you figure out:
+
+"Do the samples cluster by the tissue donor (individual)? 
+Alternatively, do they cluster by the type of tissue (normal, tumor, metastatic?)"
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Search Expression Atlas database for human colorectal cancer datasets 
+```{r}
+library(ExpressionAtlas)
+datasets <- ExpressionAtlas::searchAtlasExperiments(properties = 'colorectal cancer',
+                                                    species = 'human')
+```
+
+Download the first dataset in the results (with 54 samples - normal/primary/liver metastases)
+Extract count matrix from the downloaded object. 
+Extract colData DataFrame from the downloaded object and convert to a data.frame (hint: ?as.data.frame)
+```{r}
+download <- getAtlasData(experimentAccessions = 'E-GEOD-50760')
+exp <- download$`E-GEOD-50760`$rnaseq
+counts <- assay(exp, 'counts')
+cd <- as.data.frame(colData(exp))
+```
+
+Explore the colData data.frame. How many columns are there? Make a summary of each column. 
+Hint: see ?table 
+```{r}
+apply(cd, 2, table)
+```
+
+Drop columns that don't have more than one factors (e.g. disease) - are there any other columns with only one factor? Hint: use ?subset function
+```{r}
+cd <- subset(cd, select = c('AtlasAssayGroup', 'individual', 'organism_part', 'biopsy_site'))
+```
+
+Normalize the count matrix using DESeq2
+```{r}
+dds <- DESeq2::DESeqDataSetFromMatrix(counts, cd, ~ 1)
+dds <- estimateSizeFactors(dds)
+```
+
+Plot a heatmap of the normalized count matrix using the top most variable 500 genes.
+Annotate the columns with available sample annotations in colData object.
+```{r}
+require(pheatmap)
+M <- counts(dds, normalized = T)
+plot_heatmap(M, cd)
+```
+
+Plot the same heatmap without filtering for top genes (i.e. use all available genes in the normalized 
+count matrix). Hint: Don't forget to save your scripts before executing the command!. You'll see why :) 
+
+```{r}
+
+```
+
+Compute the principle components and make PCA plots colored by 
+1. AtlasAssayGroup
+2. organism_part
+3. biopsy_site
+Hint: use the plot_pca function defined here: 
+https://github.com/BIMSBbioinfo/compgen2020/blob/master/day2_RNAseq/lectureCode/accounting_for_known_covariates_in_DE.R
+
+```{r}
+require(ggplot2)
+plot_pca(M, cd, by = 'AtlasAssayGroup')
+plot_pca(M, cd, by = 'biopsy_site')
+plot_pca(M, cd, by = 'organism_part')
+```
+
+
+Looking into the heatmaps and PCA plots, what is the driving factor of the clustering of samples?
+
+Do the samples cluster by the donor (individual)? or do they cluster by the type of tissue (normal, tumor, metastatic?) 
+
+
+# Stylizing your HTML report
+
+Check out [this page](https://bookdown.org/yihui/rmarkdown/html-document.html) that describe how to stylize your rmarkdown reports. For example try adding the following lines at the top of the page: 
+
+Replace this line
+
+```
+output: html_document
+```
+
+with this:
+```
+output:
+  html_document:
+    theme: united
+    highlight: tango
+```
+
+Re-compile your report and see how it looks. 
+
+- How can you also keep your code but keep it folded by default in the output?
+- How can you have a floating table of contents on your screen? 
+
+
+

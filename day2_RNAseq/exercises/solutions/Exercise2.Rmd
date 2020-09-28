@@ -1,0 +1,73 @@
+---
+title: "Exercise2.Rmd"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Download the RNA-seq data from ExpressionAtlas with accession code: "E-GEOD-59831". 
+
+Extract the count and colData tables. Convert colData object into a data.frame object. 
+```{r}
+download <- getAtlasData(experimentAccessions = 'E-GEOD-59831')
+dt <- download$`E-GEOD-59831`$rnaseq
+countData <- as.matrix(assays(dt)[['counts']])
+colData <- as.data.frame(colData(dt))
+```
+
+We would like to understand the experiment design. 
+
+- Summarize the colData table 
+  - Try `summary` function
+  - Try `table` function on a specific column (e.g. 'disease')
+  - How can you loop through each column and get a summary (hint: combine `apply` and `table` functions)
+
+```{r}
+summary(colData)
+table(colData$disease)
+apply(colData, 2, table)
+```
+
+Now, carry out a differential expression analysis. 
+Our variable of interest is `disease` and we would like to account for `cell_type` in differential expression analysis. Hint: start with `dds <- DESeq2::DESeqDataSetFromMatrix(...)`
+
+```{r}
+library(DESeq2)
+dds <- DESeq2::DESeqDataSetFromMatrix(countData, colData, ~ cell_type + disease)
+dds <- dds[ rowSums(DESeq2::counts(dds)) > 1, ]
+dds <- DESeq(dds)
+```
+
+Get differentially expressed genes between normal and lung carcinoma samples. 
+Hint: See ?DESeq2::results function. 
+```{r}
+res <- DESeq2::results(dds, contrast = c('disease', 'lung carcinoma', 'normal'))
+```
+
+Do some more diagnostics
+
+### MA plot
+
+```{r}
+DESeq2::plotMA(dds)
+```
+
+### p-value histogram
+
+```{r}
+ggplot(as.data.frame(res), aes(y = pvalue)) + geom_histogram() + coord_flip()
+```
+
+
+### PCA plot
+
+Make two plots, one colored by 'disease' and the other by 'cell_type'. Which one is more dominant?
+Hint: use the plot_pca function defined here: https://github.com/BIMSBbioinfo/compgen2020/blob/master/day2_RNAseq/lectureCode/accounting_for_known_covariates_in_DE.R
+
+```{r}
+plot_pca(counts(dds, normalized = T), colData, by = 'disease')
+plot_pca(counts(dds, normalized = T), colData, by = 'cell_type')
+```
